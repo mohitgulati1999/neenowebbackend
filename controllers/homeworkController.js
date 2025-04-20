@@ -171,9 +171,6 @@ export const addHomework = async (req, res) => {
   try {
     const { userId, role, email } = req.user; // Adjusted destructuring
     console.log("addHomework request body:", req.body); // Debug log
-    if (role !== "teacher") {
-      return res.status(403).json({ message: "Access denied. Only teachers can add homework." });
-    }
 
     const { title, subject, description, dueDate, classId } = req.body;
     if (!title || !subject || !description || !dueDate || !classId) {

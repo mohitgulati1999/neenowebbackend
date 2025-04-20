@@ -184,22 +184,35 @@ export const getAllClasses = async (req, res) => {
 export const createClass = async (req, res) => {
   try {
     const { id, name, teacherId, sessionId } = req.body;
+    console.log("Received request body:", req.body);
+
     if (!id || !name || !teacherId || !sessionId) {
+      console.warn("Missing required fields");
       return res.status(400).json({ message: "All fields are required" });
     }
+
     const sessionExists = await Session.findById(sessionId);
+    console.log("Session lookup result:", sessionExists);
     if (!sessionExists) {
+      console.warn("Session not found for ID:", sessionId);
       return res.status(404).json({ message: "Session not found" });
     }
-    const teachersExist = await User.find({ 
-      _id: { $in: teacherId }, 
-      role: "teacher" 
+
+    const teachersExist = await User.find({
+      _id: { $in: teacherId },
+      role: "teacher"
     });
+    console.log("Teachers found:", teachersExist);
+
     if (teachersExist.length !== teacherId.length) {
+      console.warn("Mismatch in teacher count. Sent:", teacherId.length, "Found:", teachersExist.length);
       return res.status(404).json({ message: "One or more teachers not found" });
     }
+
     const classExists = await Class.findOne({ id });
+    console.log("Class existence check:", classExists);
     if (classExists) {
+      console.warn("Class with ID already exists:", id);
       return res.status(400).json({ message: "Class ID already exists" });
     }
 
@@ -211,8 +224,10 @@ export const createClass = async (req, res) => {
     });
 
     const savedClass = await newClass.save();
+    console.log("New class saved successfully:", savedClass);
     res.status(201).json(savedClass);
   } catch (error) {
+    console.error("Error while creating class:", error);
     res.status(400).json({ message: error.message });
   }
 };

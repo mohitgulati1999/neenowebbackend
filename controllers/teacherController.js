@@ -165,6 +165,7 @@ export const createTeacher = async (req, res) => {
       status: "active",
     });
     await newUser.save();
+    console.log("New User: ", newUser)
     // Step 7: Create a Teacher entry linked to the User
     const newTeacher = new Teacher({
       userId: newUser._id,
@@ -188,7 +189,7 @@ export const createTeacher = async (req, res) => {
       bio,
     });
     await newTeacher.save();
-    
+    console.log("NEW TEACHER ADDED")
     res.status(201).json({ 
       message: "Teacher added successfully", 
       teacher: newTeacher,
