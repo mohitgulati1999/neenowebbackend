@@ -94,12 +94,6 @@ import Student from "../models/student.js";
 // Signup Controller (Restricted to Parent and Teacher)
 export const signup = async (req, res) => {
   const { name, email, password, phone, role } = req.body;
-
-  const allowedRoles = ["parent", "teacher"];
-  if (!allowedRoles.includes(role)) {
-    return res.status(403).json({ message: "Signup is only allowed for parents and teachers" });
-  }
-
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
