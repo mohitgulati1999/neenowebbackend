@@ -3,11 +3,99 @@ import User from "../models/user.js";
 import bcrypt from "bcryptjs";
 
 // Create a new teacher (admin-only)
+// export const createTeacher = async (req, res) => {
+//   const {
+//     id,
+//     email,
+//     password,
+//     name,
+//     dateOfBirth,
+//     gender,
+//     phoneNumber,
+//     address,
+//     joiningDate,
+//     qualifications,
+//     experienceYears,
+//     subjects,
+//     payroll,
+//     contractType,
+//     workShift,
+//     workLocation,
+//     languagesSpoken,
+//     emergencyContact,
+//     bio,
+//   } = req.body;
+
+//   // Explicitly check for required fields
+//   if (!email || email === null) {
+//     return res.status(400).json({ message: "Email is required" });
+//   }
+//   if (!password) {
+//     return res.status(400).json({ message: "Password is required" });
+//   }
+//   if (!name) {
+//     return res.status(400).json({ message: "Name is required" });
+//   }
+
+//   try {
+//     // Step 1: Check if the email is already registered
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ message: "Email already registered" });
+//     }
+
+//     // Step 2: Check if the teacher ID is unique
+//     const existingTeacher = await Teacher.findOne({ id });
+//     if (existingTeacher) {
+//       return res.status(400).json({ message: "Teacher ID already exists" });
+//     }
+
+//     // Step 3: Create a User entry for the teacher
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const newUser = new User({
+//       name,
+//       email,
+//       password: hashedPassword,
+//       phone: phoneNumber, // Match User schema field name
+//       role: "teacher",
+//       status: "active",
+//     });
+//     await newUser.save();
+
+//     // Step 4: Create a Teacher entry linked to the User
+//     const newTeacher = new Teacher({
+//       userId: newUser._id,
+//       id,
+//       name,
+//       email,
+//       dateOfBirth,
+//       gender,
+//       phoneNumber,
+//       address,
+//       joiningDate,
+//       qualifications,
+//       experienceYears,
+//       subjects,
+//       payroll,
+//       contractType,
+//       workShift,
+//       workLocation,
+//       languagesSpoken,
+//       emergencyContact,
+//       bio,
+//     });
+//     await newTeacher.save();
+
+//     res.status(201).json({ message: "Teacher added successfully", teacher: newTeacher });
+//   } catch (error) {
+//     console.error("Error adding teacher:", error.message);
+//     res.status(500).json({ message: error.message });
+//   }
+// };
 export const createTeacher = async (req, res) => {
   const {
     id,
     email,
-    password,
     name,
     dateOfBirth,
     gender,
@@ -27,45 +115,60 @@ export const createTeacher = async (req, res) => {
   } = req.body;
 
   // Explicitly check for required fields
-  if (!email || email === null) {
+  if (!email) {
     return res.status(400).json({ message: "Email is required" });
-  }
-  if (!password) {
-    return res.status(400).json({ message: "Password is required" });
   }
   if (!name) {
     return res.status(400).json({ message: "Name is required" });
   }
+  if (!phoneNumber) {
+    return res.status(400).json({ message: "Phone number is required" });
+  }
 
   try {
-    // Step 1: Check if the email is already registered
+    // Step 1: Validate phone number (extract digits and check length)
+    const phoneDigits = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+    if (phoneDigits.length < 4) {
+      return res.status(400).json({ message: "Phone number must have at least 4 digits" });
+    }
+    const lastFourDigits = phoneDigits.slice(-4);
+
+    // Step 2: Extract first name from name
+    const firstName = name.split(' ')[0].toLowerCase(); // Take first word, lowercase
+
+    // Step 3: Generate password (firstName + lastFourDigits)
+    const generatedPassword = `${firstName}@${lastFourDigits}`;
+
+    // Step 4: Check if the email is already registered
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: "Email already registered" });
     }
 
-    // Step 2: Check if the teacher ID is unique
-    const existingTeacher = await Teacher.findOne({ id });
-    if (existingTeacher) {
-      return res.status(400).json({ message: "Teacher ID already exists" });
+    // Step 5: Check if the teacher ID is unique
+    if (id) {
+      const existingTeacher = await Teacher.findOne({ id });
+      if (existingTeacher) {
+        return res.status(400).json({ message: "Teacher ID already exists" });
+      }
     }
 
-    // Step 3: Create a User entry for the teacher
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Step 6: Create a User entry for the teacher
+    const hashedPassword = await bcrypt.hash(generatedPassword, 10);
     const newUser = new User({
       name,
       email,
       password: hashedPassword,
-      phone: phoneNumber, // Match User schema field name
+      phone: phoneNumber,
       role: "teacher",
       status: "active",
     });
     await newUser.save();
 
-    // Step 4: Create a Teacher entry linked to the User
+    // Step 7: Create a Teacher entry linked to the User
     const newTeacher = new Teacher({
       userId: newUser._id,
-      id,
+      id: id || undefined, // Use provided ID or let MongoDB generate _id
       name,
       email,
       dateOfBirth,
@@ -86,13 +189,16 @@ export const createTeacher = async (req, res) => {
     });
     await newTeacher.save();
 
-    res.status(201).json({ message: "Teacher added successfully", teacher: newTeacher });
+    res.status(201).json({ 
+      message: "Teacher added successfully", 
+      teacher: newTeacher,
+      generatedPassword // Return generated password for admin reference (optional)
+    });
   } catch (error) {
     console.error("Error adding teacher:", error.message);
     res.status(500).json({ message: error.message });
   }
 };
-
 // Get all teachers
 export const getAllTeachers = async (req, res) => {
   try {

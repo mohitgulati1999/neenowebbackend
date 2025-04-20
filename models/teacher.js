@@ -66,7 +66,6 @@ const teacherSchema = new mongoose.Schema({
   },
   contractType: {
     type: String,
-    enum: ["permanent", "temporary", "part-time", "contract"],
     required: true,
   },
   workShift: {

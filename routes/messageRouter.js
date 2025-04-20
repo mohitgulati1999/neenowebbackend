@@ -6,7 +6,7 @@ import {
   getAllClasses,
   getTeacherClasses,
   getAllStudents,
-  // getAdmins,
+  getAdmins,
   getStudentByParent,
   getClassTeachers,
   // deleteMessages,
@@ -24,7 +24,7 @@ router.get("/sent", authMiddleware(["admin", "parent", "teacher"]), getSentMessa
 router.get("/classes",authMiddleware(["admin", "parent", "teacher"]),  getAllClasses);
 router.get("/classes/teacher/:teacherId", authMiddleware(["admin", "parent", "teacher"]), getTeacherClasses);
 router.post("/students", authMiddleware(["admin", "parent", "teacher"]), getAllStudents);
-// router.get("/users/admins", getAdmins);
+router.get("/users/admins", authMiddleware(["admin", "parent", "teacher"]), getAdmins);
 router.get("/students/parent/:parentId", authMiddleware(["admin", "parent", "teacher"]), getStudentByParent);
 router.get("/classes/:classId/teachers", authMiddleware(["admin", "parent", "teacher"]), getClassTeachers);
 // router.delete('/delete', deleteMessages);

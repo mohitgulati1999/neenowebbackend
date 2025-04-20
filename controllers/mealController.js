@@ -3,9 +3,6 @@ import Meal from "../models/meal.js";
 export const addMeal = async (req, res) => {
   try {
     const { day, name, description, mealType } = req.body;
-    // if (req.user.role !== "admin") {
-    //   return res.status(403).json({ message: "Unauthorized" });
-    // }
 
     if (!day || !name || !description || !mealType) {
       return res.status(400).json({ message: "Day, name, description, and meal type are required" });
@@ -28,8 +25,7 @@ export const addMeal = async (req, res) => {
       day,
       name,
       description,
-      picture: null, 
-      // allergies: allergies || [], 
+      picture: null,
       mealType
     });
 
@@ -44,12 +40,8 @@ export const addMeal = async (req, res) => {
 
 export const getMealPlan = async (req, res) => {
   try {
-    // if (req.user.role !== "parent") {
-    //   return res.status(403).json({ message: "Unauthorized" });
-    // }
-
     const meals = await Meal.find({})
-      .sort({ day: 1, mealType: 1 }) 
+      .sort({ day: 1, mealType: 1 })
       .lean();
     const mealPlan = {
       Monday: { breakfast: null, lunch: null },
@@ -61,10 +53,10 @@ export const getMealPlan = async (req, res) => {
 
     meals.forEach(meal => {
       mealPlan[meal.day][meal.mealType] = {
+        _id: meal._id.toString(), // Ensure _id is included
         name: meal.name,
         description: meal.description,
-        picture: meal.picture,
-        // allergies: meal.allergies
+        picture: meal.picture
       };
     });
 
@@ -84,6 +76,11 @@ export const editMeal = async (req, res) => {
 
     const { id } = req.params;
     const { day, name, description, mealType } = req.body;
+
+    // Validate ID
+    if (!id || id === "undefined") {
+      return res.status(400).json({ message: "Invalid meal ID" });
+    }
 
     if (!day || !name || !description || !mealType) {
       return res.status(400).json({ message: "Day, name, description, and meal type are required" });
@@ -122,6 +119,9 @@ export const editMeal = async (req, res) => {
     res.status(200).json({ message: "Meal updated successfully", meal });
   } catch (error) {
     console.error("Edit meal error:", error);
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid meal ID format" });
+    }
     res.status(500).json({ message: "Server error while editing meal" });
   }
 };
@@ -134,6 +134,10 @@ export const deleteMeal = async (req, res) => {
     }
 
     const { id } = req.params;
+    if (!id || id === "undefined") {
+      return res.status(400).json({ message: "Invalid meal ID" });
+    }
+
     const meal = await Meal.findByIdAndDelete(id);
     if (!meal) {
       return res.status(404).json({ message: "Meal not found" });
@@ -142,6 +146,9 @@ export const deleteMeal = async (req, res) => {
     res.status(200).json({ message: "Meal deleted successfully" });
   } catch (error) {
     console.error("Delete meal error:", error);
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Invalid meal ID format" });
+    }
     res.status(500).json({ message: "Server error while deleting meal" });
   }
 };

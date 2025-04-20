@@ -87,36 +87,74 @@ const studentSchema = new mongoose.Schema({
 })
 
 // Pre-save hook to insert parent/guardian info into Users collection
+// studentSchema.pre("save", async function(next) {
+//   const student = this
+//   const hardcodedPassword = "password" 
+
+//   try {
+//     const createUserIfNotExists = async (info, role) => {
+//       if (info && info.email) {
+//         const existingUser = await User.findOne({ email: info.email })
+//         if (!existingUser) {
+//           const newUser = new User({
+//             role,
+//             name: info.name || "Unnamed Parent/Guardian",
+//             email: info.email,
+//             password: hardcodedPassword, // Hardcoded password
+//             phone: info.phoneNumber || null,
+//             status: "active"
+//           })
+//           await newUser.save()
+//           console.log(`Created user for ${role}: ${info.email}`)
+//         }
+//       }
+//     }
+
+//     // Create users for father, mother, and guardian if their info is provided
+//     await createUserIfNotExists(student.fatherInfo, "parent")
+//     await createUserIfNotExists(student.motherInfo, "parent")
+//     next()
+//   } catch (error) {
+//     console.error("Error in pre-save hook:", error)
+//     next(error) 
+//   }
+// })
+import bcrypt from "bcryptjs"
+
 studentSchema.pre("save", async function(next) {
   const student = this
-  const hardcodedPassword = "password" 
 
-  try {
-    const createUserIfNotExists = async (info, role) => {
-      if (info && info.email) {
-        const existingUser = await User.findOne({ email: info.email })
-        if (!existingUser) {
-          const newUser = new User({
-            role,
-            name: info.name || "Unnamed Parent/Guardian",
-            email: info.email,
-            password: hardcodedPassword, // Hardcoded password
-            phone: info.phoneNumber || null,
-            status: "active"
-          })
-          await newUser.save()
-          console.log(`Created user for ${role}: ${info.email}`)
-        }
+  const createUserIfNotExists = async (info, role) => {
+    if (info && info.email && info.phoneNumber) {
+      const existingUser = await User.findOne({ email: info.email })
+      if (!existingUser) {
+        const namePart = info.name ? info.name.split(" ")[0] : "parent"
+        const phone = info.phoneNumber
+        const last4 = phone.slice(-4)
+        const rawPassword = `${namePart}@${last4}`
+        const hashedPassword = await bcrypt.hash(rawPassword, 10)
+
+        const newUser = new User({
+          role,
+          name: info.name || "Unnamed Parent/Guardian",
+          email: info.email,
+          password: hashedPassword,
+          phone: phone,
+          status: "active"
+        })
+        await newUser.save()
+        console.log(`Created user for ${role}: ${info.email}`)
       }
     }
+  }
 
-    // Create users for father, mother, and guardian if their info is provided
+  try {
     await createUserIfNotExists(student.fatherInfo, "parent")
     await createUserIfNotExists(student.motherInfo, "parent")
     next()
   } catch (error) {
     console.error("Error in pre-save hook:", error)
-    next(error) 
+    next(error)
   }
 })
 const Student = mongoose.model("Student", studentSchema)
