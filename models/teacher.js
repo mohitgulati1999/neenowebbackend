@@ -70,7 +70,6 @@ const teacherSchema = new mongoose.Schema({
   },
   workShift: {
     type: String,
-    enum: ["Morning", "Afternoon", "full-day", "flexible"],
     required: true,
   },
   workLocation: {

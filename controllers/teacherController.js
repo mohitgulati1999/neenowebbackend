@@ -155,6 +155,7 @@ export const createTeacher = async (req, res) => {
 
     // Step 6: Create a User entry for the teacher
     const hashedPassword = await bcrypt.hash(generatedPassword, 10);
+    
     const newUser = new User({
       name,
       email,
@@ -164,7 +165,6 @@ export const createTeacher = async (req, res) => {
       status: "active",
     });
     await newUser.save();
-
     // Step 7: Create a Teacher entry linked to the User
     const newTeacher = new Teacher({
       userId: newUser._id,
@@ -188,7 +188,7 @@ export const createTeacher = async (req, res) => {
       bio,
     });
     await newTeacher.save();
-
+    
     res.status(201).json({ 
       message: "Teacher added successfully", 
       teacher: newTeacher,
